@@ -278,6 +278,7 @@ if __name__ == "__main__":
                 sys.exit(1)
     
     # Set counter safety flag
+    global USE_THREAD_SAFE_COUNTER, SIMULATE_RACE_CONDITION
     if "--unsafe-counter" in sys.argv:
         USE_THREAD_SAFE_COUNTER = False
         print("WARNING: Running with unsafe counter (race conditions possible)")
