@@ -68,7 +68,7 @@ def increment_counter(file_path: str):
             if SIMULATE_RACE_CONDITION:
                 # Add delay to force race condition even with lock (for demo purposes)
                 current = file_hit_counter[file_path]
-                time.sleep(0.001)  # Small delay
+                time.sleep(0.1)  # 100ms delay - makes race condition very visible!
                 file_hit_counter[file_path] = current + 1
             else:
                 file_hit_counter[file_path] += 1
@@ -76,7 +76,7 @@ def increment_counter(file_path: str):
         # Naive implementation without lock - will have race conditions
         if SIMULATE_RACE_CONDITION:
             current = file_hit_counter[file_path]
-            time.sleep(0.001)  # Small delay to increase chance of race condition
+            time.sleep(0.1)  # 100ms delay - makes race condition very visible!
             file_hit_counter[file_path] = current + 1
         else:
             file_hit_counter[file_path] += 1
@@ -277,14 +277,13 @@ if __name__ == "__main__":
                 print("Invalid delay value")
                 sys.exit(1)
     
-    # Set counter safety flag
-    global USE_THREAD_SAFE_COUNTER, SIMULATE_RACE_CONDITION
+    # Set counter safety flag - modify global variables
     if "--unsafe-counter" in sys.argv:
-        USE_THREAD_SAFE_COUNTER = False
+        globals()['USE_THREAD_SAFE_COUNTER'] = False
         print("WARNING: Running with unsafe counter (race conditions possible)")
     
     if "--race-demo" in sys.argv:
-        SIMULATE_RACE_CONDITION = True
+        globals()['SIMULATE_RACE_CONDITION'] = True
         print("WARNING: Race condition simulation enabled")
     
     run_server(directory, use_threading=use_threading, delay=delay)
