@@ -64,17 +64,13 @@ def check_rate_limit(client_ip: str) -> bool:
 def increment_counter(file_path: str):
     """Increment hit counter for a file. Can be thread-safe or not based on flag."""
     if USE_THREAD_SAFE_COUNTER:
+        # Thread-safe implementation with lock - no delay needed, lock prevents race conditions
         with counter_lock:
-            if SIMULATE_RACE_CONDITION:
-                # Add delay to force race condition even with lock (for demo purposes)
-                current = file_hit_counter[file_path]
-                time.sleep(0.1)  # 100ms delay - makes race condition very visible!
-                file_hit_counter[file_path] = current + 1
-            else:
-                file_hit_counter[file_path] += 1
+            file_hit_counter[file_path] += 1
     else:
         # Naive implementation without lock - will have race conditions
         if SIMULATE_RACE_CONDITION:
+            # Add delay to make race condition very visible
             current = file_hit_counter[file_path]
             time.sleep(0.1)  # 100ms delay - makes race condition very visible!
             file_hit_counter[file_path] = current + 1
@@ -86,7 +82,7 @@ def get_hit_count(file_path: str) -> int:
     with counter_lock:
         return file_hit_counter[file_path]
 
-def generate_directory_listing(root_dir: str, rel_path: str) -> bytes:
+def generate_directory_listing(root_dir: str, rel_path: str, url_path: str) -> bytes:
     """Generate an HTML directory listing for rel_path under root_dir with hit counters."""
     safe_rel = rel_path.strip("/")
     abs_dir = os.path.join(root_dir, safe_rel)
@@ -136,8 +132,9 @@ def generate_directory_listing(root_dir: str, rel_path: str) -> bytes:
         display = name + ("/" if is_dir else "")
         href = "/" + urllib.parse.quote(item_rel) + ("/" if is_dir else "")
         
-        # Get hit count for this file (not directories)
-        hit_count = get_hit_count(item_rel) if not is_dir else "-"
+        # Get hit count for this file using URL path format (matches Victoria's approach)
+        url_item_path = url_path + (name + "/" if is_dir else name)
+        hit_count = get_hit_count(url_item_path) if not is_dir else "-"
         
         lines.append(f"<tr><td><a href=\"{href}\">{display}</a></td><td>{hit_count}</td></tr>")
     
@@ -165,12 +162,12 @@ def serve_path(client_socket, root_dir: str, raw_path: str, delay: float = 0):
 
     # If path is a directory (or root), return listing
     if rel == "" or os.path.isdir(abs_path):
-        response = generate_directory_listing(root_real, rel)
+        response = generate_directory_listing(root_real, rel, unquoted)
         client_socket.sendall(response)
         return
 
-    # Increment counter for file access
-    increment_counter(rel)
+    # Increment counter for file access - use the URL path format
+    increment_counter(unquoted)
 
     # Serve file if exists and allowed
     if not os.path.exists(abs_path):
