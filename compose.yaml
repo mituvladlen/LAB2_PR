@@ -1,0 +1,21 @@
+services:
+  server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pr-web-server-lab2
+    environment:
+      PORT: 8080
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./www:/app/www:ro
+    command: ["python", "server.py", "www"]
+
+  requesttest:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    entrypoint: ["python"]
+    depends_on:
+      - server
