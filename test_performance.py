@@ -72,7 +72,7 @@ def main():
     NUM_REQUESTS = 10
     
     # Test file path
-    TEST_PATH = "/"
+    TEST_PATH = "/image.png"
     
     print("=" * 60)
     print("HTTP Server Performance Comparison Test")

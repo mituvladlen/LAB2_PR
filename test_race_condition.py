@@ -51,7 +51,7 @@ def main():
     print(f"  - Server: {HOST}:{PORT}")
     
     # We'll test with a specific file
-    TEST_FILE = "www/index.html"
+    TEST_FILE = "image.png"
     
     print(f"  - Test file: /{TEST_FILE}")
     
@@ -71,7 +71,7 @@ def main():
     print(f"\nMaking {NUM_REQUESTS} concurrent requests...")
     successful_unsafe = test_race_condition(url, NUM_REQUESTS)
     
-    print(f"\nNow check the directory listing at http://{HOST}:{PORT}/www/")
+    print(f"\nNow check the directory listing at http://{HOST}:{PORT}/")
     print(f"Look at the 'Hits' counter for {TEST_FILE}")
     print(f"Expected: {NUM_REQUESTS}, but you'll likely see LESS due to race conditions!")
     
@@ -89,7 +89,7 @@ def main():
     print(f"\nMaking {NUM_REQUESTS} concurrent requests...")
     successful_safe = test_race_condition(url, NUM_REQUESTS)
     
-    print(f"\nNow check the directory listing at http://{HOST}:{PORT}/www/")
+    print(f"\nNow check the directory listing at http://{HOST}:{PORT}/")
     print(f"Look at the 'Hits' counter for {TEST_FILE}")
     print(f"Expected: {NUM_REQUESTS}, and it should match exactly!")
     

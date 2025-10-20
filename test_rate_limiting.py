@@ -141,7 +141,7 @@ def main():
     
     input("\nPress Enter to start the test...")
     
-    url = f"http://{HOST}:{PORT}/"
+    url = f"http://{HOST}:{PORT}/image.png"
     
     # Test 1: Normal user staying under the limit
     print("\n" + "=" * 70)
