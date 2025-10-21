@@ -88,6 +88,25 @@ python server.py www
 python test_rate_limiting.py
 ```
 
-Notes:
-- Race demo adds delay only in the UNSAFE counter path to amplify lost updates; safe mode uses a lock and should reach 100/100.
-- If a test reports connection issues, ensure the server is running and port 8080 is free.
+---
+
+### Work
+
+**Test_Performance**
+
+Images: `test_perf-1.png`, `test_perf-2.png`, `test_perf-3.png`
+
+These screenshots show the performance comparison between single-threaded and multithreaded modes. The multithreaded server handles concurrent requests significantly faster, demonstrating the benefits of parallel processing.
+
+**Test_Race_Condition**
+
+Images: `test_race-1.png`, `test_race-2.png`, `1.png`, `2.png`
+
+The race condition test demonstrates that with the SAFE counter mode (using locks), all 100 requests were delivered and counted correctly, showing that the thread-safe implementation prevents lost updates.
+
+**Test_Rate_Limiting**
+
+Images: `danu1.png`, `danu2.png`
+
+My friend connected to my server by using my IP address through a mobile hotspot. When he started spamming requests rapidly, the rate limiting feature kicked in and returned HTTP 429 errors, preventing the server from being overwhelmed.
+

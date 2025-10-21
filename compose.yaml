@@ -3,7 +3,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: pr-web-server-lab2
+    container_name: pr-web-server-lab2-1
     environment:
       PORT: 8080
     ports:
