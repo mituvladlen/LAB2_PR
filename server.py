@@ -23,6 +23,7 @@ MAX_REQUESTS_PER_SECOND = 5
 # Configuration flags
 USE_THREAD_SAFE_COUNTER = True  # Set to False to demonstrate race conditions
 SIMULATE_RACE_CONDITION = False  # Set to True to force race conditions
+ENABLE_RATE_LIMITING = True  # Set to False to disable rate limiting
 
 def build_response(status_code: int, reason: str, headers: dict, body: bytes) -> bytes:
     """Build a raw HTTP/1.1 response (status line + headers + body)."""
@@ -63,10 +64,13 @@ def check_rate_limit(client_ip: str) -> bool:
 
 def increment_counter(file_path: str):
     """Increment hit counter for a file. Can be thread-safe or not based on flag."""
+    print(f"[DEBUG] Incrementing counter for: '{file_path}'")
+    
     if USE_THREAD_SAFE_COUNTER:
-        # Thread-safe implementation with lock - no delay needed, lock prevents race conditions
+        # Thread-safe implementation with lock
         with counter_lock:
             file_hit_counter[file_path] += 1
+            print(f"[DEBUG] Counter (SAFE): {file_path} = {file_hit_counter[file_path]}")
     else:
         # Naive implementation without lock - will have race conditions
         if SIMULATE_RACE_CONDITION:
@@ -74,8 +78,10 @@ def increment_counter(file_path: str):
             current = file_hit_counter[file_path]
             time.sleep(0.1)  # 100ms delay - makes race condition very visible!
             file_hit_counter[file_path] = current + 1
+            print(f"[DEBUG] Counter (UNSAFE with delay): {file_path} = {file_hit_counter[file_path]}")
         else:
             file_hit_counter[file_path] += 1
+            print(f"[DEBUG] Counter (UNSAFE no delay): {file_path} = {file_hit_counter[file_path]}")
 
 def get_hit_count(file_path: str) -> int:
     """Get hit counter for a file in a thread-safe way."""
@@ -136,6 +142,9 @@ def generate_directory_listing(root_dir: str, rel_path: str, url_path: str) -> b
         url_item_path = url_path + (name + "/" if is_dir else name)
         hit_count = get_hit_count(url_item_path) if not is_dir else "-"
         
+        if name == "image.png":
+            print(f"[DEBUG] Displaying hits for {name}: url_item_path='{url_item_path}', hit_count={hit_count}")
+        
         lines.append(f"<tr><td><a href=\"{href}\">{display}</a></td><td>{hit_count}</td></tr>")
     
     lines += ["</table>", "</body></html>"]
@@ -189,8 +198,8 @@ def handle_client(client_socket, addr, directory, delay=0):
     try:
         client_ip = addr[0]
         
-        # Check rate limit
-        if not check_rate_limit(client_ip):
+        # Check rate limit (if enabled)
+        if ENABLE_RATE_LIMITING and not check_rate_limit(client_ip):
             print(f"[{datetime.now().strftime('%H:%M:%S')}] Rate limited: {client_ip}")
             client_socket.sendall(rate_limited_response())
             return
@@ -252,12 +261,13 @@ def run_server(directory, host="0.0.0.0", port=8080, use_threading=True, delay=0
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
-        print("Usage: python server.py <directory> [--single-threaded] [--delay SECONDS] [--unsafe-counter] [--race-demo]")
+        print("Usage: python server.py <directory> [--single-threaded] [--delay SECONDS] [--unsafe-counter] [--race-demo] [--no-rate-limit]")
         print("\nOptions:")
         print("  --single-threaded    Run in single-threaded mode (default: multi-threaded)")
         print("  --delay SECONDS      Add artificial delay to simulate work (default: 0)")
         print("  --unsafe-counter     Use naive counter without locks (for race condition demo)")
         print("  --race-demo          Add delays to force race conditions (for demonstration)")
+        print("  --no-rate-limit      Disable rate limiting (useful for counter tests)")
         sys.exit(1)
     
     directory = sys.argv[1]
@@ -282,5 +292,9 @@ if __name__ == "__main__":
     if "--race-demo" in sys.argv:
         globals()['SIMULATE_RACE_CONDITION'] = True
         print("WARNING: Race condition simulation enabled")
+    
+    if "--no-rate-limit" in sys.argv:
+        globals()['ENABLE_RATE_LIMITING'] = False
+        print("WARNING: Rate limiting disabled")
     
     run_server(directory, use_threading=use_threading, delay=delay)
